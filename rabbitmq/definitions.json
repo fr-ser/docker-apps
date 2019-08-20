@@ -1,0 +1,97 @@
+{
+  "users": [
+    {
+      "name": "guest1",
+      "password": "guest1",
+      "tags": "administrator"
+    },
+    {
+      "name": "sf-producer",
+      "password": "123",
+      "tags": "producer"
+    },
+    {
+      "name": "sf-consumer",
+      "password": "123",
+      "tags": "reader"
+    }
+  ],
+  "vhosts": [
+    {
+      "name": "/"
+    },
+    {
+      "name": "/sf-mqtt-readings"
+    }
+  ],
+  "permissions": [
+    {
+      "user": "guest1",
+      "vhost": "/",
+      "configure": ".*",
+      "read": ".*",
+      "write": ".*"
+    },
+    {
+      "user": "sf-producer",
+      "vhost": "/sf-mqtt-readings",
+      "configure": ".*",
+      "write": ".*",
+      "read": ""
+    },
+    {
+      "user": "sf-consumer",
+      "vhost": "/sf-mqtt-readings",
+      "configure": ".*",
+      "write": "",
+      "read": ".*"
+    }
+  ],
+  "parameters": [],
+  "policies": [],
+  "queues": [
+    {
+      "name": "sf-raw-readings",
+      "vhost": "/sf-mqtt-readings",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": { "x-queue-mode": "lazy" }
+    },
+    {
+      "name": "sf-data-lake-readings",
+      "vhost": "/sf-mqtt-readings",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": { "x-queue-mode": "lazy" }
+    }
+  ],
+  "exchanges": [
+    {
+      "name": "sf-mqtt",
+      "vhost": "/sf-mqtt-readings",
+      "type": "topic",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    }
+  ],
+  "bindings": [
+    {
+      "source": "sf-mqtt",
+      "vhost": "/sf-mqtt-readings",
+      "destination": "sf-data-lake-readings",
+      "destination_type": "queue",
+      "routing_key": "payload.readings",
+      "arguments": {}
+    },
+    {
+      "source": "sf-mqtt",
+      "vhost": "/sf-mqtt-readings",
+      "destination": "sf-raw-readings",
+      "destination_type": "queue",
+      "routing_key": "payload.readings",
+      "arguments": {}
+    }
+  ]
+}
