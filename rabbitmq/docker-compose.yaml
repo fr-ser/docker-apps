@@ -1,4 +1,4 @@
-version: '3.6'
+version: "3.6"
 
 services:
   rabbitmq:
@@ -8,3 +8,4 @@ services:
     ports:
       - "5672:5672"
       - "15672:15672"
+      - "1883:1883"
