@@ -1,12 +1,20 @@
-version: '3.6'
+version: "3.6"
 
 services:
+  zookeeper:
+    image: wurstmeister/zookeeper
+    ports:
+      - "2181:2181"
   kafka:
-    image: spotify/kafka
+    image: wurstmeister/kafka
     ports:
       - "9092:9092"
-      - "2181:2181"
     environment:
-      ADVERTISED_HOST: localhost
-      ADVERTISED_PORT: 9092
-      TOPICS: readings
+      # for ease of use it might be advisable to link kafka -> localhost in the /etc/hosts file
+      KAFKA_ADVERTISED_HOST_NAME: kafka
+      # topic,partition,replication
+      KAFKA_CREATE_TOPICS: "readings:2:1"
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+  cli:
+    # container with preinstalled kafka cli tools
+    image: frser/kafka-cli
