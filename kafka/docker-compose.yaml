@@ -17,10 +17,12 @@ services:
     environment: &default-broker-env
       KAFKA_BROKER_ID: 0
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_LISTENERS: "INTERNAL://kafka01:29092,EXTERNAL://:9092"
-      KAFKA_ADVERTISED_LISTENERS: "INTERNAL://kafka01:29092,EXTERNAL://localhost:9092"
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT"
-      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      # The "INTERNAL" listener needs to be called "PLAINTEXT" for compatability with the
+      # schema registry: https://github.com/confluentinc/schema-registry/issues/648
+      KAFKA_LISTENERS: "PLAINTEXT://kafka01:29092,EXTERNAL://:9092"
+      KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://kafka01:29092,EXTERNAL://localhost:9092"
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT"
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
   kafka02:
     <<: *broker-default
@@ -29,8 +31,8 @@ services:
     environment:
       <<: *default-broker-env
       KAFKA_BROKER_ID: 1
-      KAFKA_LISTENERS: "INTERNAL://kafka02:29093,EXTERNAL://:9093"
-      KAFKA_ADVERTISED_LISTENERS: "INTERNAL://kafka02:29093,EXTERNAL://localhost:9093"
+      KAFKA_LISTENERS: "PLAINTEXT://kafka02:29093,EXTERNAL://:9093"
+      KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://kafka02:29093,EXTERNAL://localhost:9093"
   kafka03:
     <<: *broker-default
     ports:
@@ -38,8 +40,21 @@ services:
     environment:
       <<: *default-broker-env
       KAFKA_BROKER_ID: 2
-      KAFKA_LISTENERS: "INTERNAL://kafka03:29094,EXTERNAL://:9094"
-      KAFKA_ADVERTISED_LISTENERS: "INTERNAL://kafka03:29094,EXTERNAL://localhost:9094"
+      KAFKA_LISTENERS: "PLAINTEXT://kafka03:29094,EXTERNAL://:9094"
+      KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://kafka03:29094,EXTERNAL://localhost:9094"
+  kafka-schema-registry:
+    image: confluentinc/cp-schema-registry:5.3.2
+    ports:
+      - "8081:8081"
+    environment:
+      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: PLAINTEXT://kafka01:29092
+      SCHEMA_REGISTRY_LISTENERS: http://0.0.0.0:8081
+      SCHEMA_REGISTRY_HOST_NAME: kafka-schema-registry
+    depends_on:
+      - zookeeper
+      - kafka01
+      - kafka02
+      - kafka03
   cli:
     # container with preinstalled kafka cli tools
     image: frser/kafka-cli
