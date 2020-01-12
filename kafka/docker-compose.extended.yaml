@@ -1,0 +1,101 @@
+version: "3"
+
+services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper
+    ports:
+      - "2181:2181"
+    hostname: zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+  kafka01: &broker-default
+    image: confluentinc/cp-kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment: &default-broker-env
+      KAFKA_BROKER_ID: 0
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENERS: "PLAINTEXT://kafka01:29092,EXTERNAL://:9092"
+      KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://kafka01:29092,EXTERNAL://localhost:9092"
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT"
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
+  kafka02:
+    <<: *broker-default
+    ports:
+      - "9093:9093"
+    environment:
+      <<: *default-broker-env
+      KAFKA_BROKER_ID: 1
+      KAFKA_LISTENERS: "PLAINTEXT://kafka02:29093,EXTERNAL://:9093"
+      KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://kafka02:29093,EXTERNAL://localhost:9093"
+  kafka03:
+    <<: *broker-default
+    ports:
+      - "9094:9094"
+    environment:
+      <<: *default-broker-env
+      KAFKA_BROKER_ID: 2
+      KAFKA_LISTENERS: "PLAINTEXT://kafka03:29094,EXTERNAL://:9094"
+      KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://kafka03:29094,EXTERNAL://localhost:9094"
+  kafka-schema-registry:
+    image: confluentinc/cp-schema-registry
+    ports:
+      - "8081:8081"
+    environment:
+      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: PLAINTEXT://kafka01:29092
+      SCHEMA_REGISTRY_LISTENERS: http://0.0.0.0:8081
+      SCHEMA_REGISTRY_HOST_NAME: kafka-schema-registry
+    depends_on:
+      - zookeeper
+      - kafka01
+  kafka-rest-proxy:
+    image: confluentinc/cp-kafka-rest
+    depends_on:
+      - zookeeper
+      - kafka01
+      - kafka02
+      - kafka03
+    ports:
+      - "8082:8082"
+    environment:
+      KAFKA_REST_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_REST_HOST_NAME: rest-proxy
+      KAFKA_REST_LISTENERS: http://0.0.0.0:8082
+  kafka-connect:
+    image: confluentinc/cp-kafka-connect
+    ports:
+      - 8083:8083
+    environment:
+      CONNECT_REST_ADVERTISED_PORT: 8083
+      CONNECT_BOOTSTRAP_SERVERS: kafka01:29092,kafka02:29093,kafka03:29094
+      CONNECT_GROUP_ID: connect
+      CONNECT_CONFIG_STORAGE_TOPIC: connect-config
+      CONNECT_OFFSET_STORAGE_TOPIC: connect-offset
+      CONNECT_STATUS_STORAGE_TOPIC: connect-status
+      CONNECT_KEY_CONVERTER: "org.apache.kafka.connect.storage.StringConverter"
+      CONNECT_KEY_CONVERTER_SCHEMAS_ENABLE: "false"
+      CONNECT_VALUE_CONVERTER: "io.confluent.connect.avro.AvroConverter"
+      CONNECT_INTERNAL_KEY_CONVERTER: "org.apache.kafka.connect.storage.StringConverter"
+      CONNECT_INTERNAL_VALUE_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
+      CONNECT_REST_ADVERTISED_HOST_NAME: "kafka-connect"
+      CONNECT_PLUGIN_PATH: /usr/share/java
+      CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_URL: kafka-schema-registry:8081
+      CONNECT_KEY_CONVERTER_SCHEMA_REGISTRY_URL: kafka-schema-registry:8081
+    depends_on:
+      - kafka01
+      - kafka02
+      - kafka03
+  kafka-cli:
+    depends_on:
+      - kafka01
+      - kafka02
+      - kafka03
+    image: frser/kafka-cli
+    environment:
+      BOOTSTRAP_SERVER: kafka01:29092
+      CREATE_TOPICS: >-
+        test.telemetry.readings:3:1,
+        test.telemetry.alarms:3:1
