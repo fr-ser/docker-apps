@@ -42,20 +42,7 @@ services:
       KAFKA_BROKER_ID: 2
       KAFKA_LISTENERS: "PLAINTEXT://kafka03:29094,EXTERNAL://:9094"
       KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://kafka03:29094,EXTERNAL://localhost:9094"
-  kafka-schema-registry:
-    image: confluentinc/cp-schema-registry:5.3.2
-    ports:
-      - "8081:8081"
-    environment:
-      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: PLAINTEXT://kafka01:29092
-      SCHEMA_REGISTRY_LISTENERS: http://0.0.0.0:8081
-      SCHEMA_REGISTRY_HOST_NAME: kafka-schema-registry
-    depends_on:
-      - zookeeper
-      - kafka01
-      - kafka02
-      - kafka03
-  cli:
+  kafka-cli:
     # container with preinstalled kafka cli tools
     image: frser/kafka-cli
     environment:
