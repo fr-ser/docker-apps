@@ -55,6 +55,7 @@ services:
     image: confluentinc/cp-kafka-rest
     depends_on:
       - zookeeper
+      - kafka-schema-registry
       - kafka01
       - kafka02
       - kafka03
@@ -64,6 +65,7 @@ services:
       KAFKA_REST_ZOOKEEPER_CONNECT: zookeeper:2181
       KAFKA_REST_HOST_NAME: rest-proxy
       KAFKA_REST_LISTENERS: http://0.0.0.0:8082
+      KAFKA_REST_SCHEMA_REGISTRY_URL: http://kafka-schema-registry:8081
   kafka-connect:
     image: confluentinc/cp-kafka-connect
     ports:
@@ -93,9 +95,12 @@ services:
       - kafka01
       - kafka02
       - kafka03
+    # container with preinstalled kafka cli tools
     image: frser/kafka-cli
     environment:
       BOOTSTRAP_SERVER: kafka01:29092
+      # special environment variable to create topics
+      # Format: <topic_name>:<topic_partitions=1>:<topic_replication=1>,<...><...><...>,...
       CREATE_TOPICS: >-
         test.telemetry.readings:3:1,
         test.telemetry.alarms:3:1
