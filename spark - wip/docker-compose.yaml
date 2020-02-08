@@ -1,3 +1,5 @@
+# CURRENTLY DEPRECATED AS SPARK_SUBMIT IS NOT WORKING AS EXPECTED
+
 # biggest thanks to this guy: https://github.com/mvillarrealb/docker-spark-cluster
 version: "3.7"
 
@@ -12,12 +14,16 @@ services:
       - ./data:/opt/spark-data
     environment:
       - "SPARK_LOCAL_IP=master"
+    # in reality the workers depend on the master,
+    # but this way you can start the cluster with docker-compose up master
+    depends_on:
+      - worker0
+      - worker1
+      - worker2
   worker0: &worker-default
     image: frser/spark-worker:2.4.4
     ports:
       - "9091:8081"
-    depends_on:
-      - master
     environment:
       - SPARK_MASTER=spark://master:7077
       - SPARK_WORKER_CORES=1
@@ -46,6 +52,3 @@ services:
       - ./data:/opt/spark-data
     depends_on:
       - master
-      - worker0
-      - worker1
-      - worker2

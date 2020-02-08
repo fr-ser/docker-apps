@@ -21,3 +21,5 @@ RUN wget --no-verbose http://mirrors.ukfast.co.uk/sites/ftp.apache.org/spark/spa
     tar -xvzf spark-${SPARK_VERSION}-bin-hadoop${HADOOP_VERSION}.tgz && \
     mv spark-${SPARK_VERSION}-bin-hadoop${HADOOP_VERSION} spark && \
     rm spark-${SPARK_VERSION}-bin-hadoop${HADOOP_VERSION}.tgz
+
+RUN export PATH="/spark/bin:${PATH}"
