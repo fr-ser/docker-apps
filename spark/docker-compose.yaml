@@ -3,7 +3,7 @@ version: "3.7"
 
 services:
   master:
-    image: frser/spark-master
+    image: frser/spark-master:2.4.4
     ports:
       - "9090:8080"
       - "7077:7077"
@@ -13,7 +13,7 @@ services:
     environment:
       - "SPARK_LOCAL_IP=master"
   worker0: &worker-default
-    image: frser/spark-worker
+    image: frser/spark-worker:2.4.4
     ports:
       - "9091:8081"
     depends_on:
@@ -36,7 +36,8 @@ services:
     ports:
       - "9093:8081"
   jupyter:
-    image: frser/spark-jupyter
+    # image from 30/01/2020 at 7:05 am with Spark 2.4.4
+    image: jupyter/pyspark-notebook:414b5d749704
     ports:
       - "8888:8888"
       - "4040:4040"
