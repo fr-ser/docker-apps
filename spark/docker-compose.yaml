@@ -1,0 +1,50 @@
+# biggest thanks to this guy: https://github.com/mvillarrealb/docker-spark-cluster
+version: "3.7"
+
+services:
+  master:
+    image: frser/spark-master
+    ports:
+      - "9090:8080"
+      - "7077:7077"
+    volumes:
+      - ./apps:/opt/spark-apps
+      - ./data:/opt/spark-data
+    environment:
+      - "SPARK_LOCAL_IP=master"
+  worker0: &worker-default
+    image: frser/spark-worker
+    ports:
+      - "9091:8081"
+    depends_on:
+      - master
+    environment:
+      - SPARK_MASTER=spark://master:7077
+      - SPARK_WORKER_CORES=1
+      - SPARK_WORKER_MEMORY=1G
+      - SPARK_DRIVER_MEMORY=128m
+      - SPARK_EXECUTOR_MEMORY=256m
+    volumes:
+      - ./apps:/opt/spark-apps
+      - ./data:/opt/spark-data
+  worker1:
+    <<: *worker-default
+    ports:
+      - "9092:8081"
+  worker2:
+    <<: *worker-default
+    ports:
+      - "9093:8081"
+  jupyter:
+    image: frser/spark-jupyter
+    ports:
+      - "8888:8888"
+      - "4040:4040"
+    volumes:
+      - ./apps:/home/jovyan/work
+      - ./data:/opt/spark-data
+    depends_on:
+      - master
+      - worker0
+      - worker1
+      - worker2
