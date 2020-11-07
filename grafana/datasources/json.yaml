@@ -1,0 +1,9 @@
+apiVersion: 1
+datasources:
+  - name: json
+    type: simpod-json-datasource
+    url: http://some-host:3030
+    access: proxy
+    isDefault: false
+    editable: true
+    basicAuth: false

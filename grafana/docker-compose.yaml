@@ -1,0 +1,14 @@
+version: "3.2"
+
+services:
+  grafana:
+    image: grafana/grafana:7.1.5
+    environment:
+      GF_INSTALL_PLUGINS: simpod-json-datasource
+    volumes:
+      - "./grafana/grafana.ini:/etc/grafana/grafana.ini"
+      - "./grafana/dashboard.yaml:/etc/grafana/provisioning/dashboards/dashboard.yaml"
+      - "./grafana/datasources:/etc/grafana/provisioning/datasources"
+      - "./grafana/dashboards:/app/dashboards"
+    ports:
+      - 3000:3000
