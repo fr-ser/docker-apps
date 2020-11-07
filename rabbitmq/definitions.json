@@ -1,19 +1,14 @@
 {
   "users": [
     {
-      "name": "guest1",
-      "password": "guest1",
+      "name": "rabbitmq",
+      "password": "rabbitmq",
       "tags": "administrator"
     },
     {
-      "name": "sf-producer",
+      "name": "producer",
       "password": "123",
-      "tags": "producer"
-    },
-    {
-      "name": "sf-consumer",
-      "password": "123",
-      "tags": "reader"
+      "tags": ""
     }
   ],
   "vhosts": [
@@ -21,76 +16,87 @@
       "name": "/"
     },
     {
-      "name": "/sf-mqtt-readings"
+      "name": "/readings"
     }
   ],
   "permissions": [
     {
-      "user": "guest1",
-      "vhost": "/",
+      "user": "rabbitmq",
+      "vhost": "/readings",
       "configure": ".*",
       "read": ".*",
       "write": ".*"
     },
     {
-      "user": "sf-producer",
-      "vhost": "/sf-mqtt-readings",
+      "user": "producer",
+      "vhost": "/readings",
       "configure": ".*",
       "write": ".*",
       "read": ""
-    },
+    }
+  ],
+  "topic_permissions": [
     {
-      "user": "sf-consumer",
-      "vhost": "/sf-mqtt-readings",
-      "configure": ".*",
-      "write": "",
-      "read": ".*"
+      "user": "producer",
+      "vhost": "/readings",
+      "exchange": "mqtt",
+      "write": "^device\\.readings",
+      "read": ""
     }
   ],
   "parameters": [],
   "policies": [],
   "queues": [
     {
-      "name": "sf-raw-readings",
-      "vhost": "/sf-mqtt-readings",
+      "name": "device-readings",
+      "vhost": "/readings",
       "durable": true,
       "auto_delete": false,
-      "arguments": { "x-queue-mode": "lazy" }
+      "arguments": { "x-queue-type": "quorum", "x-quorum-initial-group-size": 1 }
     },
     {
-      "name": "sf-data-lake-readings",
-      "vhost": "/sf-mqtt-readings",
+      "name": "mqtt-not-routed",
+      "vhost": "/readings",
       "durable": true,
       "auto_delete": false,
-      "arguments": { "x-queue-mode": "lazy" }
+      "arguments": { "x-queue-type": "quorum", "x-quorum-initial-group-size": 1 }
     }
   ],
   "exchanges": [
     {
-      "name": "sf-mqtt",
-      "vhost": "/sf-mqtt-readings",
-      "type": "topic",
+      "name": "mqtt-not-routed",
+      "vhost": "/readings",
+      "type": "fanout",
       "durable": true,
       "auto_delete": false,
       "internal": false,
       "arguments": {}
+    },
+    {
+      "name": "mqtt",
+      "vhost": "/readings",
+      "type": "topic",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": { "alternate-exchange": "mqtt-not-routed" }
     }
   ],
   "bindings": [
     {
-      "source": "sf-mqtt",
-      "vhost": "/sf-mqtt-readings",
-      "destination": "sf-data-lake-readings",
+      "source": "mqtt-not-routed",
+      "vhost": "/readings",
+      "destination": "mqtt-not-routed",
       "destination_type": "queue",
-      "routing_key": "payload.readings",
+      "routing_key": "",
       "arguments": {}
     },
     {
-      "source": "sf-mqtt",
-      "vhost": "/sf-mqtt-readings",
-      "destination": "sf-raw-readings",
+      "source": "mqtt",
+      "vhost": "/readings",
+      "destination": "device-readings",
       "destination_type": "queue",
-      "routing_key": "payload.readings",
+      "routing_key": "device.readings.#",
       "arguments": {}
     }
   ]
