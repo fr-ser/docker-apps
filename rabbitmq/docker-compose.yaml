@@ -2,9 +2,11 @@ version: "3.6"
 
 services:
   rabbitmq:
-    build:
-      context: ./
-      dockerfile: Dockerfile
+    image: rabbitmq:3.8.9-management
+    volumes:
+      - ./rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
+      - ./definitions.json:/etc/rabbitmq/definitions.json
+      - ./enabled_plugins:/etc/rabbitmq/enabled_plugins
     ports:
       - "5672:5672"
       - "15672:15672"
