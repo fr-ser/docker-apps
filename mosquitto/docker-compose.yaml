@@ -1,0 +1,12 @@
+version: "3.6"
+
+services:
+  broker:
+    image: eclipse-mosquitto:1.4.12
+    volumes:
+      - ./passwords.txt:/mosquitto/auth/passwords.txt
+      - ./tls_auth:/mosquitto/tls_auth/
+      - ./mosquitto-tls.conf:/mosquitto/config/mosquitto.conf
+    ports:
+      - "8883:8883"
+      - "1883:1883"
