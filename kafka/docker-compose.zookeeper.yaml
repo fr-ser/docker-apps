@@ -1,0 +1,56 @@
+version: "3.6"
+
+services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper
+    ports:
+      - "2181:2181"
+    hostname: zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+  kafka0: &broker-default
+    image: confluentinc/cp-kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment: &default-broker-env
+      KAFKA_BROKER_ID: 0
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENERS: "INTERNAL://kafka0:29092,EXTERNAL://:9092"
+      KAFKA_ADVERTISED_LISTENERS: "INTERNAL://kafka0:29092,EXTERNAL://localhost:9092"
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT"
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
+  kafka1:
+    <<: *broker-default
+    ports:
+      - "9093:9093"
+    environment:
+      <<: *default-broker-env
+      KAFKA_BROKER_ID: 1
+      KAFKA_LISTENERS: "INTERNAL://kafka1:29093,EXTERNAL://:9093"
+      KAFKA_ADVERTISED_LISTENERS: "INTERNAL://kafka1:29093,EXTERNAL://localhost:9093"
+  kafka2:
+    <<: *broker-default
+    ports:
+      - "9094:9094"
+    environment:
+      <<: *default-broker-env
+      KAFKA_BROKER_ID: 2
+      KAFKA_LISTENERS: "INTERNAL://kafka2:29094,EXTERNAL://:9094"
+      KAFKA_ADVERTISED_LISTENERS: "INTERNAL://kafka2:29094,EXTERNAL://localhost:9094"
+  kafka-cli:
+    # container with preinstalled kafka cli tools
+    image: frser/kafka-cli
+    environment:
+      BOOTSTRAP_SERVER: kafka0:29092
+      # special environment variable to create topics
+      # Format: <topic_name>:<topic_partitions=1>:<topic_replication=1>,<...><...><...>,...
+      CREATE_TOPICS: >-
+        test.telemetry.readings:3:1,
+        test.telemetry.alarms:3:1
+    depends_on:
+      - kafka0
+      - kafka1
+      - kafka2
